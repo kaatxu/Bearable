@@ -1,3 +1,4 @@
+import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Index from './index';
 
@@ -8,8 +9,7 @@ export default function Layout() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: '#ddd9d7' }, // global background
-        animation: 'slide_from_right', // slide animation
+        animation: "slide_from_right",
       }}
     >
       <Stack.Screen name="Home" component={Index} />
