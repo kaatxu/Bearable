@@ -6,15 +6,22 @@ import {
   Animated,
   Easing,
   useWindowDimensions,
+  Platform
 } from "react-native";
 
 import PlayButton from "../assets/icons/play-button.svg";
 import PauseButton from "../assets/icons/pause-button.svg";
 import Popup from "./ConnectPopup";
 
-export default function WifiButton() {
-  const { width } = useWindowDimensions();
+import BluetoothNative from "../bluetooth/Bluetooth.native";
+import BluetoothWeb from "../bluetooth/Bluetooth.web";
 
+export default function WifiButton() {
+  const bluetoothService = useRef(
+    Platform.OS === "web" ? new BluetoothWeb() : new BluetoothNative()
+  ).current;
+
+  const { width } = useWindowDimensions();
   const BUTTON_SIZE = Math.min(width * 0.4, 220);
   const RIPPLE_SIZE = BUTTON_SIZE * 1.25;
 
@@ -66,9 +73,20 @@ export default function WifiButton() {
 
   const shadowHeight = shadowAnim.interpolate({ inputRange: [0, 12], outputRange: [0, 12] });
 
-  const handlePress = () => {
-    if (!isPaused) setShowPopup(true);
-    else {
+  const handlePress = async () => {
+    if (!isPaused) {
+      setShowPopup(true);
+      const ok = await bluetoothService.requestPermissions();
+      if (!ok) return;
+
+      try {
+        await bluetoothService.startScan((device) => {
+          console.log("Found device:", device.name || device.id);
+        });
+      } catch (e) {
+        console.warn("Scan cancelled", e);
+      }
+    } else {
       animateRipplesIn();
       setIsPaused(false);
     }

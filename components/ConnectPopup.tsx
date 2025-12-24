@@ -9,6 +9,8 @@ import {
   useWindowDimensions,
 } from "react-native";
 import DeviceRefresh from "../assets/icons/device-refresh.svg";
+import BluetoothNative from "../bluetooth/Bluetooth.native";
+import BluetoothWeb from "../bluetooth/Bluetooth.web";
 
 interface PopupProps {
   visible: boolean;
@@ -23,6 +25,8 @@ export default function Popup({
   onCancel,
   message = "Available Devices",
 }: PopupProps) {
+  const bluetoothService = useRef(new BluetoothWeb()).current;
+
   const { width, height } = useWindowDimensions();
   const scale = width / 375;
   const clamp = (v: number, min: number, max: number) =>
@@ -113,17 +117,28 @@ export default function Popup({
     }
   };
 
-  const startRefresh = (skipFade = false) => {
+  const startRefresh = async (skipFade = false) => {
     if (refreshing) return;
+
     setRefreshing(true);
     spinAnim.setValue(0);
     mainState.current = "scanning";
-    if (!skipFade) {
-      fadeText("Scanning for devices");
-    } else {
-      setDisplayText("Scanning for devices");
-    }
+
+    if (!skipFade) fadeText("Scanning for devices");
+    else setDisplayText("Scanning for devices");
+
     startDots();
+
+    try {
+      const ok = await bluetoothService.requestPermissions();
+      if (ok) {
+        await bluetoothService.startScan((device) => {
+          if (device?.name) {
+            fadeText(device.name);
+          }
+        });
+      }
+    } catch {}
 
     Animated.timing(spinAnim, {
       toValue: 2,
@@ -134,7 +149,7 @@ export default function Popup({
       stopDots();
       setRefreshing(false);
       mainState.current = "idle";
-      fadeText("No devices found");
+      if (!displayText) fadeText("No devices found");
     });
   };
 
@@ -221,19 +236,22 @@ export default function Popup({
           </View>
         </View>
 
-        <View
-          style={{
-            width: width * 0.9,
-            marginTop: clamp(50 * scale, 30, 80),
-            paddingVertical: clamp(14 * scale, 12, 20),
-            borderRadius: clamp(25 * scale, 20, 40),
-            backgroundColor: "#726f6d",
-            opacity: 0.45,
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ color: "#fff", fontWeight: "600", fontSize: clamp(16 * scale, 14, 20) }}>Start Pairing</Text>
-        </View>
+        <TouchableWithoutFeedback onPress={onConfirm}>
+          <View
+            style={{
+              width: width * 0.9,
+              marginTop: clamp(50 * scale, 30, 80),
+              paddingVertical: clamp(14 * scale, 12, 20),
+              borderRadius: clamp(25 * scale, 20, 40),
+              backgroundColor: "#726f6d",
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ color: "#fff", fontWeight: "600", fontSize: clamp(16 * scale, 14, 20) }}>
+              Start Pairing
+            </Text>
+          </View>
+        </TouchableWithoutFeedback>
       </Animated.View>
     </Animated.View>
   );
