@@ -21,12 +21,25 @@ export default class BluetoothNative implements BluetoothService {
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       ]);
 
-      return (
+      const permsGranted =
         granted['android.permission.BLUETOOTH_SCAN'] === 'granted' &&
         granted['android.permission.BLUETOOTH_CONNECT'] === 'granted' &&
-        granted['android.permission.ACCESS_FINE_LOCATION'] === 'granted'
-      );
+        granted['android.permission.ACCESS_FINE_LOCATION'] === 'granted';
+
+      if (!permsGranted) return false;
+      const state = await this.manager.state();
+      if (state !== 'PoweredOn') {
+        return false;
+      }
+
+      return true;
     }
+
+    if (Platform.OS === 'ios') {
+      const state = await this.manager.state();
+      return state === 'PoweredOn';
+    }
+
     return true;
   }
 
@@ -97,16 +110,30 @@ export default class BluetoothNative implements BluetoothService {
       console.warn("Failed to send BPM:", err);
     }
   }
+  
 
   async disconnect(): Promise<void> {
-    if (this.connectedDevice) {
+    if (!this.connectedDevice) return;
+
+    try {
+      // Stop notifications if a characteristic is active
+      if (this.characteristic) {
+        try {
+          await (this.characteristic as any).stopNotifications();
+        } catch (err) {
+          console.warn("Failed to stop notifications:", err);
+        }
+        this.characteristic = null;
+      }
+
+      // Cancel the BLE connection
       await this.connectedDevice.cancelConnection();
+      console.log("Device disconnected successfully");
+    } catch (err) {
+      console.warn("Failed to disconnect device:", err);
+    } finally {
       this.connectedDevice = null;
-      this.characteristic = null;
     }
   }
-
-  getDevicesList(): Device[] {
-    return Array.from(this.devices.values());
-  }
 }
+

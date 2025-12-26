@@ -8,7 +8,6 @@ export default class BluetoothWeb implements BluetoothService {
 
   async requestPermissions(): Promise<boolean> {
     if (!navigator.bluetooth) {
-      alert("Web Bluetooth is not supported in this browser");
       return false;
     }
     return true;

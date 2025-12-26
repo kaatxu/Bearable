@@ -6,7 +6,9 @@ import {
   Animated,
   Easing,
   useWindowDimensions,
-  Platform
+  Platform,
+  Alert,
+  Linking,
 } from "react-native";
 
 import PlayButton from "../assets/icons/play-button.svg";
@@ -20,6 +22,7 @@ export default function WifiButton() {
   const bluetoothService = useRef(
     Platform.OS === "web" ? new BluetoothWeb() : new BluetoothNative()
   ).current;
+  const isNativeBLE = Platform.OS !== "web";
 
   const { width } = useWindowDimensions();
   const BUTTON_SIZE = Math.min(width * 0.4, 220);
@@ -27,6 +30,8 @@ export default function WifiButton() {
 
   const [isPaused, setIsPaused] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [devices, setDevices] = useState<{ id: string; name: string }[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const ripples = [useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current];
   const pressAnim = useRef(new Animated.Value(0)).current;
@@ -73,29 +78,80 @@ export default function WifiButton() {
 
   const shadowHeight = shadowAnim.interpolate({ inputRange: [0, 12], outputRange: [0, 12] });
 
+  const startScan = async () => {
+    setDevices([]);
+    setRefreshing(true);
+
+    try {
+      bluetoothService.startScan((device: any) => {
+        const name = device.name || device.localName;
+        if (name) {
+          setDevices((prev) =>
+            prev.find((d) => d.id === device.id) ? prev : [...prev, { id: device.id, name }]
+          );
+        }
+      });
+
+      setTimeout(() => {
+        bluetoothService.stopScan();
+        setRefreshing(false);
+      }, 5000);
+    } catch (e) {
+      console.warn("Scan cancelled", e);
+      setRefreshing(false);
+    }
+  };
+
   const handlePress = async () => {
     if (!isPaused) {
-      setShowPopup(true);
       const ok = await bluetoothService.requestPermissions();
-      if (!ok) return;
+      if (!ok) {
+        if (isNativeBLE) {
+          Alert.alert(
+            "Bluetooth Required",
+            "Please turn on Bluetooth to continue.",
+            [
+              { text: "Open Settings", onPress: () => Linking.openSettings() },
+              { text: "Cancel", style: "cancel" },
+            ]
+          );
+        }
+        return;
+      }
 
-      try {
-        await bluetoothService.startScan((device) => {
-          console.log("Found device:", device.name || device.id);
-        });
-      } catch (e) {
-        console.warn("Scan cancelled", e);
+      if (isNativeBLE) {
+        setShowPopup(true);
+        await startScan();
       }
     } else {
+      try {
+        await bluetoothService.disconnect(); // <- new line
+      } catch (err) {
+        console.warn("Disconnect failed", err);
+      }
       animateRipplesIn();
       setIsPaused(false);
     }
   };
 
-  const confirmStartPairing = () => {
+  const handleConfirmPairing = async (deviceId: string) => {
+    try {
+      setRefreshing(true);
+      await bluetoothService.connectToDevice(deviceId);
+      setShowPopup(false);
+      setIsPaused(true);
+      animateRipplesOut();
+      setRefreshing(false);
+    } catch (err) {
+      console.warn("Connection failed", err);
+      setRefreshing(false);
+      Alert.alert("Connection failed", "Could not connect to device.");
+    }
+  };
+
+  const cancelScan = () => {
+    bluetoothService.stopScan();
     setShowPopup(false);
-    setIsPaused(true);
-    animateRipplesOut();
   };
 
   const ButtonIcon = isPaused ? PauseButton : PlayButton;
@@ -145,7 +201,15 @@ export default function WifiButton() {
         </TouchableWithoutFeedback>
       </View>
 
-      <Popup visible={showPopup} onConfirm={confirmStartPairing} onCancel={() => setShowPopup(false)} />
+      <Popup
+        visible={showPopup}
+        onConfirm={handleConfirmPairing}
+        onCancel={cancelScan}
+        stopScan={() => bluetoothService.stopScan()}
+        devices={devices}
+        refreshing={refreshing}
+        onRefresh={startScan}
+      />
     </View>
   );
 }
