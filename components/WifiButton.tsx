@@ -24,6 +24,8 @@ export default function WifiButton() {
     Platform.OS === "web" ? new BluetoothWeb() : new BluetoothNative()
   ).current;
   const isNativeBLE = Platform.OS !== "web";
+  const SERVICE_UUID = "00001234-0000-1000-8000-00805f9b34fb";
+  const CHARACTERISTIC_UUID = "00005678-0000-1000-8000-00805f9b34fb"; 
 
   const { width } = useWindowDimensions();
   const BUTTON_SIZE = Math.min(width * 0.4, 220);
@@ -146,7 +148,7 @@ export default function WifiButton() {
       }
     } else {
       try {
-        await bluetoothService.disconnect(); // <- new line
+        await bluetoothService.disconnect();
       } catch (err) {
         console.warn("Disconnect failed", err);
       }
@@ -158,7 +160,9 @@ export default function WifiButton() {
   const handleConfirmPairing = async (deviceId: string) => {
     try {
       setRefreshing(true);
-      await bluetoothService.connectToDevice(deviceId);
+      await bluetoothService.connectToDevice(deviceId, SERVICE_UUID, CHARACTERISTIC_UUID);
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      await bluetoothService.sendBPM(20);
       setShowPopup(false);
       setIsPaused(true);
       animateRipplesOut();
@@ -230,7 +234,7 @@ export default function WifiButton() {
       <Modal
         visible={showPopup}
         transparent
-        animationType="none" // we'll handle the slide animation inside Popup
+        animationType="none"
         onRequestClose={cancelScan}
       >
         <TouchableWithoutFeedback onPress={cancelScan}>

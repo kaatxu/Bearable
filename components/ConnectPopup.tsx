@@ -280,7 +280,6 @@ export default function Popup({
           </View>
         </View>
 
-        {/* Confirm Button */}
         <TouchableWithoutFeedback
           disabled={!selectedDevice || pairing}
           onPress={handleConfirm}

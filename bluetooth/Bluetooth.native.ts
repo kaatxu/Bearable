@@ -116,7 +116,6 @@ export default class BluetoothNative implements BluetoothService {
     if (!this.connectedDevice) return;
 
     try {
-      // Stop notifications if a characteristic is active
       if (this.characteristic) {
         try {
           await (this.characteristic as any).stopNotifications();
@@ -126,7 +125,6 @@ export default class BluetoothNative implements BluetoothService {
         this.characteristic = null;
       }
 
-      // Cancel the BLE connection
       await this.connectedDevice.cancelConnection();
       console.log("Device disconnected successfully");
     } catch (err) {

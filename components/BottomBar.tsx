@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { useRouter } from "expo-router";
 import {
   View,
   Text,
@@ -18,6 +19,7 @@ interface BottomBarProps {
 
 export default function BottomBar({ style }: BottomBarProps) {
   const { width } = useWindowDimensions();
+  const router = useRouter();
 
   const CONTAINER_WIDTH = Math.min(width * 0.92, 460);
   const HEIGHT = Math.max(62, Math.min(78, width * 0.18));
@@ -52,6 +54,8 @@ export default function BottomBar({ style }: BottomBarProps) {
         useNativeDriver: true,
       }),
     ]).start();
+    if (index === 0) router.push("/");
+    if (index === 1) router.push("/control");
   };
 
   const iconSize = Math.max(20, Math.min(26, width * 0.06));
@@ -70,7 +74,6 @@ export default function BottomBar({ style }: BottomBarProps) {
           },
         ]}
       >
-        {/* ----- Sliding White Pill ----- */}
         <Animated.View
           style={[
             styles.pill,
@@ -84,8 +87,6 @@ export default function BottomBar({ style }: BottomBarProps) {
             },
           ]}
         />
-
-        {/* ----- Left Tab ----- */}
         <TouchableWithoutFeedback onPress={() => switchTab(0)}>
           <View style={[styles.tab, { width: TAB_WIDTH }]}>
             {active !== 0 && (
@@ -102,8 +103,6 @@ export default function BottomBar({ style }: BottomBarProps) {
             </Animated.View>
           </View>
         </TouchableWithoutFeedback>
-
-        {/* ----- Right Tab ----- */}
         <TouchableWithoutFeedback onPress={() => switchTab(1)}>
           <View style={[styles.tab, { width: TAB_WIDTH }]}>
             {active !== 1 && (

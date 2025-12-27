@@ -7,7 +7,6 @@ export default function RootLayout() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Stack screens transparent so background shows through */}
         <Stack
           screenOptions={{
             headerShown: false,
