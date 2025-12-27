@@ -15,7 +15,7 @@ interface PopupProps {
   visible: boolean;
   onConfirm: (deviceId: string) => Promise<void>;
   onCancel: () => void;
-  stopScan?: () => void; // Pass a function to stop BLE scan
+  stopScan?: () => void;
   message?: string;
   devices?: { id: string; name: string }[];
   refreshing?: boolean;
@@ -40,7 +40,6 @@ export default function Popup({
   const REFRESH_SIZE = clamp(28 * scale, 22, 36);
 
   const popupTranslateY = useRef(new Animated.Value(height)).current;
-  const dimAnim = useRef(new Animated.Value(0)).current;
   const spinAnim = useRef(new Animated.Value(0)).current;
 
   const [isMounted, setIsMounted] = useState(visible);
@@ -49,7 +48,6 @@ export default function Popup({
 
   const pairingTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Animate popup in
   useEffect(() => {
     if (visible) {
       setIsMounted(true);
@@ -60,17 +58,11 @@ export default function Popup({
           easing: Easing.out(Easing.ease),
           useNativeDriver: false,
         }),
-        Animated.timing(dimAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: false,
-        }),
       ]).start();
     }
   }, [visible]);
 
   const hidePopup = () => {
-    // Stop scanning immediately
     if (stopScan) stopScan();
 
     Animated.parallel([
@@ -80,17 +72,11 @@ export default function Popup({
         easing: Easing.in(Easing.ease),
         useNativeDriver: false,
       }),
-      Animated.timing(dimAnim, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: false,
-      }),
     ]).start(() => {
       setIsMounted(false);
       setSelectedDevice(null);
       setPairing(false);
 
-      // Clear pairing timeout
       if (pairingTimeout.current) {
         clearTimeout(pairingTimeout.current);
         pairingTimeout.current = null;
@@ -100,7 +86,6 @@ export default function Popup({
     });
   };
 
-  // Spin animation for refresh
   useEffect(() => {
     if (refreshing) {
       spinAnim.setValue(0);
@@ -130,7 +115,6 @@ export default function Popup({
 
     setPairing(true);
 
-    // Start pairing timeout (reset if pairing takes too long)
     pairingTimeout.current = setTimeout(() => {
       setPairing(false);
       setSelectedDevice(null);
@@ -138,14 +122,12 @@ export default function Popup({
 
     try {
       await onConfirm(selectedDevice);
-      // pairing successful
       if (pairingTimeout.current) {
         clearTimeout(pairingTimeout.current);
         pairingTimeout.current = null;
       }
       hidePopup();
     } catch (err) {
-      // pairing failed
       setPairing(false);
       setSelectedDevice(null);
     }
@@ -156,11 +138,8 @@ export default function Popup({
       style={[
         StyleSheet.absoluteFillObject,
         {
-          backgroundColor: dimAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: ["rgba(0,0,0,0)", "rgba(0,0,0,0.5)"],
-          }),
           justifyContent: "flex-end",
+          zIndex: 1000, 
         },
       ]}
     >
@@ -177,7 +156,6 @@ export default function Popup({
           alignItems: "center",
         }}
       >
-        {/* Close */}
         <TouchableWithoutFeedback onPress={hidePopup}>
           <Text
             style={{
@@ -192,7 +170,6 @@ export default function Popup({
           </Text>
         </TouchableWithoutFeedback>
 
-        {/* Title */}
         <Text
           style={{
             fontSize: clamp(18 * scale, 16, 22),
@@ -205,7 +182,6 @@ export default function Popup({
           {message}
         </Text>
 
-        {/* Refresh + Devices */}
         <View style={{ width: "100%", marginTop: -12 * scale }}>
           {onRefresh && (
             <TouchableWithoutFeedback onPress={onRefresh}>

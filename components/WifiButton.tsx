@@ -9,6 +9,7 @@ import {
   Platform,
   Alert,
   Linking,
+  Modal,
 } from "react-native";
 
 import PlayButton from "../assets/icons/play-button.svg";
@@ -33,9 +34,28 @@ export default function WifiButton() {
   const [devices, setDevices] = useState<{ id: string; name: string }[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
+  const dimAnim = useRef(new Animated.Value(0)).current;
+
   const ripples = [useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current];
   const pressAnim = useRef(new Animated.Value(0)).current;
   const shadowAnim = useRef(new Animated.Value(8)).current;
+  const [modalMounted, setModalMounted] = useState(false);
+
+  const fadeInDim = () => {
+    Animated.timing(dimAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const fadeOutDim = () => {
+    Animated.timing(dimAnim, {
+      toValue: 0,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  };
 
   const animateRipplesOut = () => {
     ripples.forEach((r, i) => {
@@ -121,7 +141,8 @@ export default function WifiButton() {
 
       if (isNativeBLE) {
         setShowPopup(true);
-        await startScan();
+        fadeInDim(); 
+        startScan();
       }
     } else {
       try {
@@ -152,6 +173,11 @@ export default function WifiButton() {
   const cancelScan = () => {
     bluetoothService.stopScan();
     setShowPopup(false);
+      Animated.timing(dimAnim, {
+      toValue: 0,
+      duration: 250,
+      useNativeDriver: false,
+    }).start(() => setShowPopup(false));
   };
 
   const ButtonIcon = isPaused ? PauseButton : PlayButton;
@@ -201,15 +227,36 @@ export default function WifiButton() {
         </TouchableWithoutFeedback>
       </View>
 
-      <Popup
+      <Modal
         visible={showPopup}
-        onConfirm={handleConfirmPairing}
-        onCancel={cancelScan}
-        stopScan={() => bluetoothService.stopScan()}
-        devices={devices}
-        refreshing={refreshing}
-        onRefresh={startScan}
-      />
+        transparent
+        animationType="none" // we'll handle the slide animation inside Popup
+        onRequestClose={cancelScan}
+      >
+        <TouchableWithoutFeedback onPress={cancelScan}>
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFillObject,
+              {
+                backgroundColor: dimAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ["rgba(0,0,0,0)", "rgba(0,0,0,0.5)"],
+                }),
+              },
+            ]}
+          />
+        </TouchableWithoutFeedback>
+
+        <Popup
+          visible={showPopup}
+          onConfirm={handleConfirmPairing}
+          onCancel={cancelScan}
+          stopScan={() => bluetoothService.stopScan()}
+          devices={devices}
+          refreshing={refreshing}
+          onRefresh={startScan}
+        />
+      </Modal>
     </View>
   );
 }
