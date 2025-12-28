@@ -1,56 +1,60 @@
-{
-  "expo": {
-    "name": "Bearable",
-    "slug": "Bearable",
-    "icon": "./assets/images/bear-icon.png",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "scheme": "bearable",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true,
-      "infoPlist": {
-        "NSBluetoothAlwaysUsageDescription": "This app requires Bluetooth access to connect to devices",
-        "NSBluetoothPeripheralUsageDescription": "This app uses Bluetooth to connect to devices",
-        "ITSAppUsesNonExemptEncryption": false
+  {
+    "expo": {
+      "name": "Bearable",
+      "slug": "Bearable",
+      "icon": "./assets/images/bear-icon.png",
+      "version": "1.0.0",
+      "orientation": "portrait",
+      "scheme": "bearable",
+      "userInterfaceStyle": "automatic",
+      "newArchEnabled": true,
+      "ios": {
+        "supportsTablet": true,
+        "infoPlist": {
+          "NSBluetoothAlwaysUsageDescription": "This app requires Bluetooth access to connect to devices",
+          "NSBluetoothPeripheralUsageDescription": "This app uses Bluetooth to connect to devices",
+          "ITSAppUsesNonExemptEncryption": false
+        },
+        "bundleIdentifier": "com.anonymous.Bearable"
       },
-      "bundleIdentifier": "com.anonymous.Bearable"
-    },
-    "android": {
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.Bearable",
-      "permissions": [
-        "BLUETOOTH_SCAN",
-        "BLUETOOTH_CONNECT",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
-      ]
-    },
-    "web": {
-      "output": "static"
-    },
-    "plugins": [
-      "expo-router",
-      [
-      "expo-splash-screen",
-        {
-          "backgroundColor": "#ddd9d7",
-          "image": "./assets/images/bear-icon.png",
-          "imageWidth": 200
+      "android": {
+        "adaptiveIcon": {
+          "foregroundImage": "./assets/images/bear-icon-foreground.png",
+          "backgroundColor": "#ddd9d7"
+        },
+        "edgeToEdgeEnabled": true,
+        "predictiveBackGestureEnabled": false,
+        "package": "com.anonymous.Bearable",
+        "permissions": [
+          "BLUETOOTH_SCAN",
+          "BLUETOOTH_CONNECT",
+          "ACCESS_FINE_LOCATION",
+          "ACCESS_COARSE_LOCATION"
+        ]
+      },
+      "web": {
+        "output": "static"
+      },
+      "plugins": [
+        "expo-router",
+        [
+        "expo-splash-screen",
+          {
+            "backgroundColor": "#ddd9d7",
+            "image": "./assets/images/splash-icon.png",
+            "resizeMode": "contain"
+          }
+        ]
+      ],
+      "experiments": {
+        "typedRoutes": true,
+        "reactCompiler": true
+      },
+      "extra": {
+        "router": {},
+        "eas": {
+          "projectId": "3eac0bdf-159d-4ac5-b49d-08ca4608d46a"
         }
-      ]
-    ],
-    "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
-    },
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "3eac0bdf-159d-4ac5-b49d-08ca4608d46a"
       }
     }
   }
-}
