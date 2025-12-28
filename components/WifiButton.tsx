@@ -28,7 +28,7 @@ export default function WifiButton() {
   const CHARACTERISTIC_UUID = "00005678-0000-1000-8000-00805f9b34fb"; 
 
   const { width } = useWindowDimensions();
-  const BUTTON_SIZE = Math.min(width * 0.4, 220);
+  const BUTTON_SIZE = Math.min(width * 0.4, 240);
   const RIPPLE_SIZE = BUTTON_SIZE * 1.25;
 
   const [isPaused, setIsPaused] = useState(false);

@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   activeText: {
-    fontWeight: "600",
+    fontFamily: 'Montserrat-SemiBold',
     color: "#555",
   },
 });

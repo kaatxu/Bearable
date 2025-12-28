@@ -1,7 +1,6 @@
 import { Text, View } from "react-native";
 import WaveBackground from "../components/WaveBackground";
 import WifiButton from "../components/WifiButton";
-import BottomBar from "../components/BottomBar";
 
 export default function Index() {
   return (
