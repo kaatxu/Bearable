@@ -16,10 +16,9 @@ import PlayButton from "../assets/icons/play-button.svg";
 import PauseButton from "../assets/icons/pause-button.svg";
 import Popup from "./ConnectPopup";
 
-import BluetoothNative from "../bluetooth/Bluetooth.native";
+import { bluetoothService } from "../bluetooth/BluetoothSingleton";
 
 export default function WifiButton() {
-  const bluetoothService = useRef(new BluetoothNative()).current;
   const isNativeBLE = Platform.OS !== "web";
   const SERVICE_UUID = "00001234-0000-1000-8000-00805f9b34fb";
   const CHARACTERISTIC_UUID = "00005678-0000-1000-8000-00805f9b34fb"; 

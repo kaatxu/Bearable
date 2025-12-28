@@ -13,6 +13,7 @@ import {
 import { useRef, useState } from "react";
 import WaveBackground from "../components/WaveBackground";
 import SetControlButton from "../assets/icons/set-control-button.svg";
+import { bluetoothService } from "../bluetooth/BluetoothSingleton";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -39,7 +40,7 @@ function clamp(v: number) {
   return Math.min(Math.max(v, MIN), MAX);
 }
 
-function PressableButton({ label }: { label: string }) {
+function PressableButton({ label, onPress }: { label: string; onPress?: () => void }) {
   const pressAnim = useRef(new Animated.Value(0)).current;
   const shadowAnim = useRef(new Animated.Value(12)).current;
 
@@ -76,7 +77,7 @@ function PressableButton({ label }: { label: string }) {
   };
 
   return (
-    <TouchableWithoutFeedback onPressIn={pressIn} onPressOut={pressOut}>
+    <TouchableWithoutFeedback onPressIn={pressIn} onPressOut={() => { pressOut(); onPress?.(); }}>
       <Animated.View
         style={[
           styles.buttonWrapper,
@@ -112,8 +113,25 @@ function PressableButton({ label }: { label: string }) {
 }
 
 export default function Index() {
-  const [value, setValue] = useState(170);
-  const [text, setText] = useState("170");
+  const [value, setValue] = useState(20);
+  const [text, setText] = useState("20");
+  const [isPaused, setIsPaused] = useState(false);
+  const lastBpm = useRef(20);
+
+  const handleSetTempo = async (newBpm: number) => {
+    lastBpm.current = newBpm;
+    await bluetoothService.sendBPM(newBpm);
+  };
+
+  const handleStartStop = async () => {
+    if (isPaused) {
+      await bluetoothService.sendBPM(lastBpm.current); // resume
+      setIsPaused(false);
+    } else {
+      await bluetoothService.pause(); // pause without sending BPM 0
+      setIsPaused(true);
+    }
+  };
 
   const pan = useRef(
     PanResponder.create({
@@ -186,8 +204,8 @@ export default function Index() {
         <View style={{ height: SCREEN_HEIGHT * 0.08 }} />
 
         <View style={[styles.card, { height: CARD_HEIGHT_BOTTOM, justifyContent: "center" }]}>
-          <PressableButton label="Set tempo" />
-          <PressableButton label="Start / Stop" />
+          <PressableButton label="Set tempo" onPress={() => handleSetTempo(value)} />
+          <PressableButton label={isPaused ? "Start" : "Stop"} onPress={handleStartStop} />
         </View>
       </View>
     </ScrollView>

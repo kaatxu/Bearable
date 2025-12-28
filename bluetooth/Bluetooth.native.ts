@@ -110,6 +110,16 @@ export default class BluetoothNative implements BluetoothService {
       console.warn("Failed to send BPM:", err);
     }
   }
+
+  async pause() {
+    if (!this.characteristic || !this.connectedDevice) return;
+    const PAUSE_COMMAND = Buffer.from(Uint8Array.of(0)).toString('base64');
+    try {
+      await this.characteristic.writeWithResponse(PAUSE_COMMAND);
+    } catch (err) {
+      console.warn("Failed to send pause command:", err);
+    }
+  }
   
 
   async disconnect(): Promise<void> {
