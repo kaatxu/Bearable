@@ -10,7 +10,7 @@ import {
   Dimensions,
   ScrollView,
 } from "react-native";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import WaveBackground from "../components/WaveBackground";
 import SetControlButton from "../assets/icons/set-control-button.svg";
 import { bluetoothService } from "../bluetooth/BluetoothSingleton";
@@ -115,20 +115,40 @@ function PressableButton({ label, onPress }: { label: string; onPress?: () => vo
 export default function Index() {
   const [value, setValue] = useState(20);
   const [text, setText] = useState("20");
-  const [isPaused, setIsPaused] = useState(false);
+  const [isPaused, setIsPaused] = useState(!bluetoothService.isConnected());
   const lastBpm = useRef(20);
 
   const handleSetTempo = async (newBpm: number) => {
     lastBpm.current = newBpm;
-    await bluetoothService.sendBPM(newBpm);
+    if (!isPaused) {
+      await bluetoothService.sendBPM(newBpm);
+    }
   };
 
+  useEffect(() => {
+    const onConnect = () => setIsPaused(false);
+    const onDisconnect = () => setIsPaused(true);
+
+    bluetoothService.on("connect", onConnect);
+    bluetoothService.on("disconnect", onDisconnect);
+
+    return () => {
+      bluetoothService.off("connect", onConnect);
+      bluetoothService.off("disconnect", onDisconnect);
+    };
+  }, []);
+
   const handleStartStop = async () => {
+    if (!bluetoothService.isConnected()) {
+      console.warn("No device connected");
+      return;
+    }
+
     if (isPaused) {
-      await bluetoothService.sendBPM(lastBpm.current); // resume
+      await bluetoothService.sendBPM(lastBpm.current);
       setIsPaused(false);
     } else {
-      await bluetoothService.pause(); // pause without sending BPM 0
+      await bluetoothService.pause();
       setIsPaused(true);
     }
   };

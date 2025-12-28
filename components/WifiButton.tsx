@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   TouchableWithoutFeedback,
@@ -27,7 +27,7 @@ export default function WifiButton() {
   const BUTTON_SIZE = Math.min(width * 0.4, 240);
   const RIPPLE_SIZE = BUTTON_SIZE * 1.25;
 
-  const [isPaused, setIsPaused] = useState(false);
+  const [isPaused, setIsPaused] = useState(() => bluetoothService.isConnected());
   const [showPopup, setShowPopup] = useState(false);
   const [devices, setDevices] = useState<{ id: string; name: string }[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -37,7 +37,6 @@ export default function WifiButton() {
   const ripples = [useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current];
   const pressAnim = useRef(new Animated.Value(0)).current;
   const shadowAnim = useRef(new Animated.Value(8)).current;
-  const [modalMounted, setModalMounted] = useState(false);
 
   const fadeInDim = () => {
     Animated.timing(dimAnim, {
@@ -119,6 +118,16 @@ export default function WifiButton() {
       setRefreshing(false);
     }
   };
+
+  useEffect(() => {
+    ripples.forEach(r => r.stopAnimation());
+
+    if (bluetoothService.isConnected()) {
+      animateRipplesOut();
+    } else {
+      animateRipplesIn();
+    }
+  }, []);
 
   const handlePress = async () => {
     if (!isPaused) {

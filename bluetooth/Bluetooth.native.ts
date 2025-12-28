@@ -3,14 +3,48 @@ import { PermissionsAndroid, Platform } from 'react-native';
 import { Buffer } from 'buffer';
 import {BluetoothService} from "./Bluetooth";
 
+type Listener = () => void;
+
+class RNEventEmitter {
+  private listeners: Record<string, Listener[]> = {};
+
+  on(event: string, listener: Listener) {
+    if (!this.listeners[event]) this.listeners[event] = [];
+    this.listeners[event].push(listener);
+  }
+
+  off(event: string, listener: Listener) {
+    if (!this.listeners[event]) return;
+    this.listeners[event] = this.listeners[event].filter(l => l !== listener);
+  }
+
+  emit(event: string) {
+    if (!this.listeners[event]) return;
+    this.listeners[event].forEach(l => l());
+  }
+}
+
 export default class BluetoothNative implements BluetoothService {
   private manager: BleManager;
   private devices: Map<string, Device> = new Map();
   private connectedDevice: Device | null = null;
   private characteristic: Characteristic | null = null;
+  private emitter = new RNEventEmitter();
 
   constructor() {
     this.manager = new BleManager();
+  }
+
+  on(event: 'connect' | 'disconnect', listener: () => void) {
+    this.emitter.on(event, listener);
+  }
+
+  off(event: 'connect' | 'disconnect', listener: () => void) {
+    this.emitter.off(event, listener);
+  }
+
+  isConnected(): boolean {
+    return this.connectedDevice !== null;
   }
 
   async requestPermissions(): Promise<boolean> {
@@ -89,7 +123,7 @@ export default class BluetoothNative implements BluetoothService {
           }
         }
       }
-
+      this.emitter.emit('connect');
       return device;
     } catch (error) {
       console.warn('BLE Connection error:', error);
@@ -141,6 +175,7 @@ export default class BluetoothNative implements BluetoothService {
       console.warn("Failed to disconnect device:", err);
     } finally {
       this.connectedDevice = null;
+      this.emitter.emit('disconnect');
     }
   }
 }
