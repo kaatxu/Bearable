@@ -2,6 +2,7 @@
   "expo": {
     "name": "Bearable",
     "slug": "Bearable",
+    "icon": "./assets/images/bear-icon.png",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "bearable",
@@ -31,7 +32,15 @@
       "output": "static"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+      "expo-splash-screen",
+        {
+          "backgroundColor": "#ddd9d7",
+          "image": "./assets/images/bear-icon.png",
+          "imageWidth": 200
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
